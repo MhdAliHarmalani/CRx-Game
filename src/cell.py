@@ -127,8 +127,8 @@ class Cell:
 
         # Draw orbs with improved visuals
         if self.orbs:
-            # Calculate orb size based on cell size and number of orbs
-            orb_radius = min(CELL_SIZE // 3, CELL_SIZE // (2 * len(self.orbs)))
+            # Fixed orb size regardless of number of orbs
+            orb_radius = CELL_SIZE // 6  # Smaller fixed size
             spacing = CELL_SIZE // 3
 
             for i, player in enumerate(self.orbs):
