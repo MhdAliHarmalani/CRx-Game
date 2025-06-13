@@ -52,13 +52,17 @@ class Game:
         self.last_time = pygame.time.get_ticks()
         self.is_animating = False
 
+        # Explosion queue to prevent infinite recursion
+        self.explosion_queue: List[tuple[int, int]] = []
+        self.processing_explosions = False
+
         # UI elements
         self.font = pygame.font.Font(None, 36)
         self.hover_cell = None
 
     def handle_click(self, pos: tuple[int, int]) -> bool:
         """Handle a click event."""
-        if self.is_animating:
+        if self.is_animating or self.processing_explosions:
             return False
 
         # Convert screen coordinates to grid coordinates
@@ -70,7 +74,7 @@ class Game:
             if not cell.orbs or cell.orbs[0] == self.current_player:
                 # Add orb and handle explosion if needed
                 if cell.add_orb(self.current_player):
-                    self.handle_explosion(grid_y, grid_x)
+                    self.start_explosion_chain(grid_y, grid_x)
                 else:
                     # Create or update atom animation for the cell
                     # Use the cell's actual owner, not current_player
@@ -95,8 +99,19 @@ class Game:
                 return True
         return False
 
-    def handle_explosion(self, row: int, col: int) -> None:
-        """Handle an explosion at the specified cell."""
+    def start_explosion_chain(self, row: int, col: int) -> None:
+        """Start a chain of explosions using a queue to prevent recursion."""
+        self.processing_explosions = True
+        self.explosion_queue = [(row, col)]
+        
+        while self.explosion_queue:
+            current_row, current_col = self.explosion_queue.pop(0)
+            self.handle_single_explosion(current_row, current_col)
+        
+        self.processing_explosions = False
+
+    def handle_single_explosion(self, row: int, col: int) -> None:
+        """Handle a single explosion without recursion."""
         cell = self.grid[row][col]
         if len(cell.orbs) >= cell.critical_mass:
             # Store the exploding player before clearing the cell
@@ -112,7 +127,7 @@ class Game:
                 ExplosionAnimation(col, row, exploding_player, adjacent_cells)
             )
 
-            # Create orb movement animations
+            # Create orb movement animations and add orbs to adjacent cells
             for new_row, new_col in adjacent_cells:
                 if 0 <= new_row < GRID_SIZE and 0 <= new_col < GRID_SIZE:
                     target_cell = self.grid[new_row][new_col]
@@ -140,8 +155,10 @@ class Game:
                                 len(target_cell.orbs)
                             )
                         )
+                    # Add to explosion queue if it will explode
                     if len(target_cell.orbs) >= target_cell.critical_mass:
-                        self.handle_explosion(new_row, new_col)
+                        if (new_row, new_col) not in self.explosion_queue:
+                            self.explosion_queue.append((new_row, new_col))
 
     def check_win_condition(self) -> Optional[int]:
         """Check if any player has won or lost.
