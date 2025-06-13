@@ -33,8 +33,7 @@ class Game:
         self.num_players = num_players
         self.current_player = 0
         self.grid = [
-            [Cell(row, col) for col in range(GRID_SIZE)]
-            for row in range(GRID_SIZE)
+            [Cell(row, col) for col in range(GRID_SIZE)] for row in range(GRID_SIZE)  # noqa: E501
         ]
         self.screen = pygame.display.set_mode(WINDOW_SIZE)
         pygame.display.set_caption("CRx Game")
@@ -46,9 +45,7 @@ class Game:
 
         # Animation system
         self.animations: List[Animation] = []
-        self.atom_animations: Dict[
-            tuple[int, int], AtomOrbAnimation
-        ] = {}
+        self.atom_animations: Dict[tuple[int, int], AtomOrbAnimation] = {}
         self.last_time = pygame.time.get_ticks()
         self.is_animating = False
 
@@ -78,24 +75,31 @@ class Game:
                 else:
                     # Create or update atom animation for the cell
                     # Use the cell's actual owner, not current_player
-                    cell_owner = cell.owner if cell.owner is not None else self.current_player
+                    cell_owner = (
+                        cell.owner
+                        if cell.owner is not None
+                        else self.current_player  # noqa: E501
+                    )
                     if (grid_y, grid_x) in self.atom_animations:
-                        # Update existing animation with new orb count and correct player
+                        # Update existing animation with new orb count and correct player  # noqa: E501
                         animation = self.atom_animations[(grid_y, grid_x)]
                         animation.update_orb_count(len(cell.orbs))
                         animation.player = cell_owner  # Update player color
                     else:
                         # Create new animation with correct player
-                        self.atom_animations[(grid_y, grid_x)] = (
-                            AtomOrbAnimation(
-                                self.grid_offset_x + grid_x * CELL_SIZE,
-                                self.grid_offset_y + grid_y * CELL_SIZE,
-                                cell_owner,
-                                len(cell.orbs)
+                        self.atom_animations[
+                            (
+                                grid_y,
+                                grid_x,
                             )
+                        ] = AtomOrbAnimation(
+                            self.grid_offset_x + grid_x * CELL_SIZE,
+                            self.grid_offset_y + grid_y * CELL_SIZE,
+                            cell_owner,
+                            len(cell.orbs),
                         )
                 # Only switch player if the move was valid
-                self.current_player = (self.current_player + 1) % self.num_players
+                self.current_player = (self.current_player + 1) % self.num_players  # noqa: E501
                 return True
         return False
 
@@ -103,7 +107,7 @@ class Game:
         """Start a chain of explosions using a queue to prevent recursion."""
         self.processing_explosions = True
         self.explosion_queue = [(row, col)]
-        # Don't process all explosions at once - let update_explosions handle them
+        # Don't process all explosions at once - let update_explosions handle them  # noqa: E501
 
     def update_explosions(self) -> None:
         """Process one explosion per frame to prevent freezing."""
@@ -151,13 +155,16 @@ class Game:
                         animation.update_orb_count(len(target_cell.orbs))
                         animation.player = cell_owner  # Update player color
                     else:
-                        self.atom_animations[(new_row, new_col)] = (
-                            AtomOrbAnimation(
-                                self.grid_offset_x + new_col * CELL_SIZE,
-                                self.grid_offset_y + new_row * CELL_SIZE,
-                                cell_owner,
-                                len(target_cell.orbs)
+                        self.atom_animations[
+                            (
+                                new_row,
+                                new_col,
                             )
+                        ] = AtomOrbAnimation(
+                            self.grid_offset_x + new_col * CELL_SIZE,
+                            self.grid_offset_y + new_row * CELL_SIZE,
+                            cell_owner,
+                            len(target_cell.orbs),
                         )
                     # Add to explosion queue if it will explode
                     if len(target_cell.orbs) >= target_cell.critical_mass:
@@ -177,7 +184,9 @@ class Game:
             player_has_orbs = False
             for row in self.grid:
                 for cell in row:
-                    if cell.orbs and all(owner == player for owner in cell.orbs):  # noqa: E501
+                    if cell.orbs and all(
+                        owner == player for owner in cell.orbs
+                    ):  # noqa: E501
                         player_has_orbs = True
                         break
                 if player_has_orbs:
@@ -204,11 +213,11 @@ class Game:
             animation.update(dt * ANIMATION_SPEED)
             if animation.is_finished:
                 self.animations.remove(animation)
-        
+
         # Update atom animations
         for animation in self.atom_animations.values():
             animation.update(dt * ANIMATION_SPEED)
-        
+
         # Process explosions one per frame
         self.update_explosions()
 
@@ -262,12 +271,17 @@ class Game:
             for cell in row:
                 # Don't show orbs if there's an atom animation for this cell
                 show_orbs = (cell.row, cell.col) not in self.atom_animations
-                cell.draw(self.screen, self.grid_offset_x, self.grid_offset_y, show_orbs)
+                cell.draw(
+                    self.screen,
+                    self.grid_offset_x,
+                    self.grid_offset_y,
+                    show_orbs,
+                )
 
         # Draw active animations
         for animation in self.animations:
             animation.draw(self.screen)
-        
+
         # Draw atom animations
         for animation in self.atom_animations.values():
             animation.draw(self.screen)
