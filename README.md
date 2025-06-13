@@ -1,4 +1,4 @@
-# CRx Game Clone
+# CRx Game Open Source
 
 A Python implementation of the CRx game using Pygame. This is a strategy game where players take turns placing orbs on a grid, trying to eliminate their opponents' orbs.
 
