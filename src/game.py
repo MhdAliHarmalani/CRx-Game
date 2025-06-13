@@ -29,21 +29,21 @@ class Game:
         self.current_player = 0
         self.grid = [
             [Cell(row, col) for col in range(GRID_SIZE)]
-            for row in range(GRID_SIZE)
+            for row in range(GRID_SIZE)  # noqa: E501
         ]
         self.screen = pygame.display.set_mode(WINDOW_SIZE)
         pygame.display.set_caption("CRx Game")
         self.clock = pygame.time.Clock()
-        
+
         # Calculate grid offset to center it
         self.grid_offset_x = (WINDOW_SIZE[0] - (GRID_SIZE * CELL_SIZE)) // 2
         self.grid_offset_y = (WINDOW_SIZE[1] - (GRID_SIZE * CELL_SIZE)) // 2
-        
+
         # Animation system
         self.animations: List[Animation] = []
         self.last_time = pygame.time.get_ticks()
         self.is_animating = False
-        
+
         # UI elements
         self.font = pygame.font.Font(None, 36)
         self.hover_cell = None
@@ -52,11 +52,11 @@ class Game:
         """Handle a click event."""
         if self.is_animating:
             return False
-            
+
         # Convert screen coordinates to grid coordinates
         grid_x = (pos[0] - self.grid_offset_x) // CELL_SIZE
         grid_y = (pos[1] - self.grid_offset_y) // CELL_SIZE
-        
+
         if 0 <= grid_y < GRID_SIZE and 0 <= grid_x < GRID_SIZE:
             cell = self.grid[grid_y][grid_x]
             if not cell.orbs or cell.orbs[0] == self.current_player:
@@ -64,7 +64,9 @@ class Game:
                 if cell.add_orb(self.current_player):
                     self.handle_explosion(grid_y, grid_x)
                 # Only switch player if the move was valid
-                self.current_player = (self.current_player + 1) % self.num_players
+                self.current_player = (
+                    self.current_player + 1
+                ) % self.num_players  # noqa: E501
                 return True
         return False
 
@@ -75,17 +77,12 @@ class Game:
             current_player = self.current_player
             cell.orbs = []
             adjacent_cells = cell.explode()
-            
+
             # Create explosion animation
             self.animations.append(
-                ExplosionAnimation(
-                    col,
-                    row,
-                    current_player,
-                    adjacent_cells
-                )
+                ExplosionAnimation(col, row, current_player, adjacent_cells)
             )
-            
+
             # Create orb movement animations
             for new_row, new_col in adjacent_cells:
                 if 0 <= new_row < GRID_SIZE and 0 <= new_col < GRID_SIZE:
@@ -94,7 +91,7 @@ class Game:
                         OrbAnimation(
                             (col, row),
                             (new_col, new_row),
-                            current_player
+                            current_player,
                         )
                     )
                     target_cell.add_orb(current_player)
@@ -103,7 +100,7 @@ class Game:
 
     def check_win_condition(self) -> Optional[int]:
         """Check if any player has won or lost.
-        
+
         Returns:
             int: The winning player's index if someone has won,
                  -1 if a player has lost all orbs,
@@ -114,7 +111,7 @@ class Game:
             player_has_orbs = False
             for row in self.grid:
                 for cell in row:
-                    if cell.orbs and all(owner == player for owner in cell.orbs):
+                    if cell.orbs and all(owner == player for owner in cell.orbs):  # noqa: E501
                         player_has_orbs = True
                         break
                 if player_has_orbs:
@@ -123,7 +120,7 @@ class Game:
                 # Only return loss if both players have made at least one move
                 if self.current_player != player:  # If it's not the first move
                     return -1  # A player has lost all orbs
-        
+
         # Then check if any player has won by controlling the entire grid
         for player in range(self.num_players):
             if all(
@@ -148,11 +145,11 @@ class Game:
         for row in self.grid:
             for cell in row:
                 cell.hover = False
-        
+
         # Convert screen coordinates to grid coordinates
         grid_x = (pos[0] - self.grid_offset_x) // CELL_SIZE
         grid_y = (pos[1] - self.grid_offset_y) // CELL_SIZE
-        
+
         # Set hover state for the cell under the mouse
         if 0 <= grid_y < GRID_SIZE and 0 <= grid_x < GRID_SIZE:
             self.grid[grid_y][grid_x].hover = True
@@ -161,7 +158,7 @@ class Game:
         """Draw the game grid and all cells."""
         # Fill background with current player's color
         self.screen.fill(BACKGROUND_COLORS[self.current_player])
-        
+
         # Draw grid lines with anti-aliasing
         for i in range(GRID_SIZE + 1):
             # Vertical lines
@@ -169,35 +166,37 @@ class Game:
                 self.screen,
                 GRID_LINE_COLOR,
                 (self.grid_offset_x + i * CELL_SIZE, self.grid_offset_y),
-                (self.grid_offset_x + i * CELL_SIZE, 
-                 self.grid_offset_y + GRID_SIZE * CELL_SIZE),
-                2
+                (
+                    self.grid_offset_x + i * CELL_SIZE,
+                    self.grid_offset_y + GRID_SIZE * CELL_SIZE,
+                ),
+                2,
             )
             # Horizontal lines
             pygame.draw.line(
                 self.screen,
                 GRID_LINE_COLOR,
                 (self.grid_offset_x, self.grid_offset_y + i * CELL_SIZE),
-                (self.grid_offset_x + GRID_SIZE * CELL_SIZE, 
-                 self.grid_offset_y + i * CELL_SIZE),
-                2
+                (
+                    self.grid_offset_x + GRID_SIZE * CELL_SIZE,
+                    self.grid_offset_y + i * CELL_SIZE,
+                ),
+                2,
             )
-        
+
         # Draw cells
         for row in self.grid:
             for cell in row:
                 cell.draw(self.screen, self.grid_offset_x, self.grid_offset_y)
-        
+
         # Draw active animations
         for animation in self.animations:
             animation.draw(self.screen)
-        
+
         # Draw current player indicator
         player_text = f"Player {self.current_player + 1}'s turn"
         text_surface = self.font.render(player_text, True, (0, 0, 0))
-        text_rect = text_surface.get_rect(
-            center=(WINDOW_SIZE[0] // 2, 30)
-        )
+        text_rect = text_surface.get_rect(center=(WINDOW_SIZE[0] // 2, 30))
         self.screen.blit(text_surface, text_rect)
 
     def run(self) -> None:
@@ -207,7 +206,7 @@ class Game:
             current_time = pygame.time.get_ticks()
             dt = (current_time - self.last_time) / 1000.0  # Convert to seconds
             self.last_time = current_time
-            
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
