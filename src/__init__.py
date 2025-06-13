@@ -1,0 +1,1 @@
+"""CRx game package."""
