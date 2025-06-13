@@ -25,13 +25,8 @@ A Python implementation of the CRx game using Pygame. This is a strategy game wh
 │   ├── __init__.py
 │   ├── constants.py    # Game constants and configuration
 │   ├── cell.py        # Cell class implementation
-│   ├── game.py        # Main game logic
-│   └── main.py        # Game initialization
-└── tests/
-    ├── __init__.py
-    ├── conftest.py    # Test configuration
-    ├── test_cell.py   # Cell tests
-    └── test_game.py   # Game tests
+│   ├── game.py        # Main game logic   
+└── main.py        # Game initialization
 ```
 
 ## Installation
@@ -62,29 +57,6 @@ A Python implementation of the CRx game using Pygame. This is a strategy game wh
    ```bash
    python run_game.py
    ```
-
-## Running Tests
-
-1. Make sure your virtual environment is activated
-2. Run all tests:
-   ```bash
-   pytest
-   ```
-3. Run tests with coverage:
-   ```bash
-   pytest --cov=src
-   ```
-
-## Test Coverage
-
-The test suite covers:
-- Cell initialization and critical mass calculation
-- Orb placement and explosion mechanics
-- Game state management
-- Player turn handling
-- Grid drawing
-- Chain reactions
-- Cell conversion during explosions
 
 ## How to Play
 
