@@ -73,18 +73,20 @@ class Game:
                     self.handle_explosion(grid_y, grid_x)
                 else:
                     # Create or update atom animation for the cell
+                    # Use the cell's actual owner, not current_player
+                    cell_owner = cell.owner if cell.owner is not None else self.current_player
                     if (grid_y, grid_x) in self.atom_animations:
-                        # Update existing animation with new orb count
-                        self.atom_animations[(grid_y, grid_x)].update_orb_count(
-                            len(cell.orbs)
-                        )
+                        # Update existing animation with new orb count and correct player
+                        animation = self.atom_animations[(grid_y, grid_x)]
+                        animation.update_orb_count(len(cell.orbs))
+                        animation.player = cell_owner  # Update player color
                     else:
-                        # Create new animation
+                        # Create new animation with correct player
                         self.atom_animations[(grid_y, grid_x)] = (
                             AtomOrbAnimation(
                                 self.grid_offset_x + grid_x * CELL_SIZE,
                                 self.grid_offset_y + grid_y * CELL_SIZE,
-                                self.current_player,
+                                cell_owner,
                                 len(cell.orbs)
                             )
                         )
@@ -97,8 +99,8 @@ class Game:
         """Handle an explosion at the specified cell."""
         cell = self.grid[row][col]
         if len(cell.orbs) >= cell.critical_mass:
-            current_player = self.current_player
-            cell.orbs = []
+            # Store the exploding player before clearing the cell
+            exploding_player = cell.owner
             adjacent_cells = cell.explode()
 
             # Remove atom animation for exploded cell
@@ -107,7 +109,7 @@ class Game:
 
             # Create explosion animation
             self.animations.append(
-                ExplosionAnimation(col, row, current_player, adjacent_cells)
+                ExplosionAnimation(col, row, exploding_player, adjacent_cells)
             )
 
             # Create orb movement animations
@@ -118,21 +120,23 @@ class Game:
                         OrbAnimation(
                             (col, row),
                             (new_col, new_row),
-                            current_player,
+                            exploding_player,
                         )
                     )
-                    target_cell.add_orb(current_player)
+                    target_cell.add_orb(exploding_player)
                     # Create or update atom animation for the new cell
+                    # Use the target cell's actual owner
+                    cell_owner = target_cell.owner
                     if (new_row, new_col) in self.atom_animations:
-                        self.atom_animations[(new_row, new_col)].update_orb_count(
-                            len(target_cell.orbs)
-                        )
+                        animation = self.atom_animations[(new_row, new_col)]
+                        animation.update_orb_count(len(target_cell.orbs))
+                        animation.player = cell_owner  # Update player color
                     else:
                         self.atom_animations[(new_row, new_col)] = (
                             AtomOrbAnimation(
                                 self.grid_offset_x + new_col * CELL_SIZE,
                                 self.grid_offset_y + new_row * CELL_SIZE,
-                                current_player,
+                                cell_owner,
                                 len(target_cell.orbs)
                             )
                         )

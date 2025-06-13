@@ -54,11 +54,13 @@ class Cell:
             bool: True if the cell will explode, False otherwise
         """
         if not self.orbs or self.owner == player:
+            # Same player or empty cell - just add an orb
             self.orbs.append(player)
             self.owner = player
         else:
-            # Convert orbs to the new player's color
-            self.orbs = [player] * len(self.orbs)
+            # Different player - convert all orbs and add one more
+            orb_count = len(self.orbs)
+            self.orbs = [player] * (orb_count + 1)  # Convert + add one
             self.owner = player
 
         return len(self.orbs) >= self.critical_mass
