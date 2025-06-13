@@ -103,12 +103,16 @@ class Game:
         """Start a chain of explosions using a queue to prevent recursion."""
         self.processing_explosions = True
         self.explosion_queue = [(row, col)]
-        
-        while self.explosion_queue:
+        # Don't process all explosions at once - let update_explosions handle them
+
+    def update_explosions(self) -> None:
+        """Process one explosion per frame to prevent freezing."""
+        if self.explosion_queue:
             current_row, current_col = self.explosion_queue.pop(0)
             self.handle_single_explosion(current_row, current_col)
-        
-        self.processing_explosions = False
+        elif self.processing_explosions:
+            # Queue is empty, stop processing explosions
+            self.processing_explosions = False
 
     def handle_single_explosion(self, row: int, col: int) -> None:
         """Handle a single explosion without recursion."""
@@ -204,6 +208,9 @@ class Game:
         # Update atom animations
         for animation in self.atom_animations.values():
             animation.update(dt * ANIMATION_SPEED)
+        
+        # Process explosions one per frame
+        self.update_explosions()
 
     def update_hover(self, pos: tuple[int, int]) -> None:
         """Update hover state for cells."""
