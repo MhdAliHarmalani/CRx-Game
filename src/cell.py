@@ -85,6 +85,7 @@ class Cell:
         screen: pygame.Surface,
         offset_x: int,
         offset_y: int,
+        show_orbs: bool = True,
     ) -> None:
         """Draw the cell and its orbs.
 
@@ -92,6 +93,7 @@ class Cell:
             screen: Pygame surface to draw on
             offset_x: X offset of the grid
             offset_y: Y offset of the grid
+            show_orbs: Whether to draw orbs (False when animations handle them)
         """
         # Calculate cell position
         cell_x = offset_x + self.col * CELL_SIZE
@@ -125,8 +127,8 @@ class Cell:
             )
             screen.blit(text, text_rect)
 
-        # Draw orbs with improved visuals
-        if self.orbs:
+        # Draw orbs with improved visuals (only if show_orbs is True)
+        if self.orbs and show_orbs:
             # Fixed orb size regardless of number of orbs
             orb_radius = CELL_SIZE // 6  # Smaller fixed size
             spacing = CELL_SIZE // 3

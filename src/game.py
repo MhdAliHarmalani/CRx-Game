@@ -1,10 +1,15 @@
 """Game class implementation for the CRx game."""
 
-from typing import List, Optional
+from typing import List, Optional, Dict
 import pygame
 
 from .cell import Cell
-from .animations import Animation, ExplosionAnimation, OrbAnimation
+from .animations import (
+    Animation,
+    ExplosionAnimation,
+    OrbAnimation,
+    AtomOrbAnimation,
+)
 from .constants import (
     ANIMATION_SPEED,
     BACKGROUND_COLORS,
@@ -29,7 +34,7 @@ class Game:
         self.current_player = 0
         self.grid = [
             [Cell(row, col) for col in range(GRID_SIZE)]
-            for row in range(GRID_SIZE)  # noqa: E501
+            for row in range(GRID_SIZE)
         ]
         self.screen = pygame.display.set_mode(WINDOW_SIZE)
         pygame.display.set_caption("CRx Game")
@@ -41,6 +46,9 @@ class Game:
 
         # Animation system
         self.animations: List[Animation] = []
+        self.atom_animations: Dict[
+            tuple[int, int], AtomOrbAnimation
+        ] = {}
         self.last_time = pygame.time.get_ticks()
         self.is_animating = False
 
@@ -63,10 +71,25 @@ class Game:
                 # Add orb and handle explosion if needed
                 if cell.add_orb(self.current_player):
                     self.handle_explosion(grid_y, grid_x)
+                else:
+                    # Create or update atom animation for the cell
+                    if (grid_y, grid_x) in self.atom_animations:
+                        # Update existing animation with new orb count
+                        self.atom_animations[(grid_y, grid_x)].update_orb_count(
+                            len(cell.orbs)
+                        )
+                    else:
+                        # Create new animation
+                        self.atom_animations[(grid_y, grid_x)] = (
+                            AtomOrbAnimation(
+                                self.grid_offset_x + grid_x * CELL_SIZE,
+                                self.grid_offset_y + grid_y * CELL_SIZE,
+                                self.current_player,
+                                len(cell.orbs)
+                            )
+                        )
                 # Only switch player if the move was valid
-                self.current_player = (
-                    self.current_player + 1
-                ) % self.num_players  # noqa: E501
+                self.current_player = (self.current_player + 1) % self.num_players
                 return True
         return False
 
@@ -77,6 +100,10 @@ class Game:
             current_player = self.current_player
             cell.orbs = []
             adjacent_cells = cell.explode()
+
+            # Remove atom animation for exploded cell
+            if (row, col) in self.atom_animations:
+                del self.atom_animations[(row, col)]
 
             # Create explosion animation
             self.animations.append(
@@ -95,6 +122,20 @@ class Game:
                         )
                     )
                     target_cell.add_orb(current_player)
+                    # Create or update atom animation for the new cell
+                    if (new_row, new_col) in self.atom_animations:
+                        self.atom_animations[(new_row, new_col)].update_orb_count(
+                            len(target_cell.orbs)
+                        )
+                    else:
+                        self.atom_animations[(new_row, new_col)] = (
+                            AtomOrbAnimation(
+                                self.grid_offset_x + new_col * CELL_SIZE,
+                                self.grid_offset_y + new_row * CELL_SIZE,
+                                current_player,
+                                len(target_cell.orbs)
+                            )
+                        )
                     if len(target_cell.orbs) >= target_cell.critical_mass:
                         self.handle_explosion(new_row, new_col)
 
@@ -138,6 +179,10 @@ class Game:
             animation.update(dt * ANIMATION_SPEED)
             if animation.is_finished:
                 self.animations.remove(animation)
+        
+        # Update atom animations
+        for animation in self.atom_animations.values():
+            animation.update(dt * ANIMATION_SPEED)
 
     def update_hover(self, pos: tuple[int, int]) -> None:
         """Update hover state for cells."""
@@ -187,10 +232,16 @@ class Game:
         # Draw cells
         for row in self.grid:
             for cell in row:
-                cell.draw(self.screen, self.grid_offset_x, self.grid_offset_y)
+                # Don't show orbs if there's an atom animation for this cell
+                show_orbs = (cell.row, cell.col) not in self.atom_animations
+                cell.draw(self.screen, self.grid_offset_x, self.grid_offset_y, show_orbs)
 
         # Draw active animations
         for animation in self.animations:
+            animation.draw(self.screen)
+        
+        # Draw atom animations
+        for animation in self.atom_animations.values():
             animation.draw(self.screen)
 
     def run(self) -> None:
