@@ -98,17 +98,14 @@ class Cell:
         cell_y = offset_y + self.row * CELL_SIZE
 
         # Draw cell background with hover effect
-        bg_color = (220, 220, 220) if self.hover else (200, 200, 200)
+        bg_color = (220, 220, 220, 128) if self.hover else (200, 200, 200, 128)
+        surface = pygame.Surface((CELL_SIZE, CELL_SIZE), pygame.SRCALPHA)
         pygame.draw.rect(
-            screen,
+            surface,
             bg_color,
-            (
-                cell_x,
-                cell_y,
-                CELL_SIZE,
-                CELL_SIZE,
-            ),
+            (0, 0, CELL_SIZE, CELL_SIZE),
         )
+        screen.blit(surface, (cell_x, cell_y))
 
         # Draw cell border with gradient effect
         border_color = (120, 120, 120) if self.hover else (100, 100, 100)

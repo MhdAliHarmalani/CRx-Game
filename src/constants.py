@@ -19,8 +19,8 @@ PLAYER_COLORS = [
 ]
 
 BACKGROUND_COLORS = [
-    (255, 200, 200),  # Light red
-    (200, 200, 255),  # Light blue
+    (255, 150, 150),  # More vibrant red
+    (150, 150, 255),  # More vibrant blue
 ]
 
 GRID_LINE_COLOR = (100, 100, 100)

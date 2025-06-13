@@ -193,12 +193,6 @@ class Game:
         for animation in self.animations:
             animation.draw(self.screen)
 
-        # Draw current player indicator
-        player_text = f"Player {self.current_player + 1}'s turn"
-        text_surface = self.font.render(player_text, True, (0, 0, 0))
-        text_rect = text_surface.get_rect(center=(WINDOW_SIZE[0] // 2, 30))
-        self.screen.blit(text_surface, text_rect)
-
     def run(self) -> None:
         """Run the main game loop."""
         running = True
