@@ -18,7 +18,7 @@ A Python implementation of the CRx game using Pygame. This is a strategy game wh
 
 ```
 .
-├── Pipfile
+├── requirements.txt
 ├── README.md
 ├── run_game.py      # Main entry point script
 ├── src/
@@ -37,22 +37,27 @@ A Python implementation of the CRx game using Pygame. This is a strategy game wh
 ## Installation
 
 1. Make sure you have Python 3.12+ installed
-2. Install pipenv if you haven't already:
+2. Create a virtual environment (recommended):
    ```bash
-   pip install pipenv
+   python -m venv venv
    ```
-3. Clone this repository
+3. Activate the virtual environment:
+   - On Windows:
+     ```bash
+     venv\Scripts\activate
+     ```
+   - On macOS/Linux:
+     ```bash
+     source venv/bin/activate
+     ```
 4. Install dependencies:
    ```bash
-   pipenv install
+   pip install -r requirements.txt
    ```
 
 ## Running the Game
 
-1. Activate the virtual environment:
-   ```bash
-   pipenv shell
-   ```
+1. Make sure your virtual environment is activated
 2. Run the game:
    ```bash
    python run_game.py
@@ -60,10 +65,7 @@ A Python implementation of the CRx game using Pygame. This is a strategy game wh
 
 ## Running Tests
 
-1. Activate the virtual environment:
-   ```bash
-   pipenv shell
-   ```
+1. Make sure your virtual environment is activated
 2. Run all tests:
    ```bash
    pytest
