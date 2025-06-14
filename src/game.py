@@ -37,14 +37,15 @@ class Game:
         self.num_players = num_players
         self.debug = debug
         self.move_count = 0
-        
+
         # Setup debug logging
         if self.debug:
             self.setup_debug_logging()
-        
+
         self.current_player = 0
         self.grid = [
-            [Cell(row, col) for col in range(GRID_SIZE)] for row in range(GRID_SIZE)  # noqa: E501
+            [Cell(row, col) for col in range(GRID_SIZE)]
+            for row in range(GRID_SIZE)  # noqa: E501
         ]
         self.screen = pygame.display.set_mode(WINDOW_SIZE, pygame.RESIZABLE)
         pygame.display.set_caption("CRx Game")
@@ -68,60 +69,63 @@ class Game:
         self.font = pygame.font.Font(None, 36)
         self.hover_cell = None
         self.ui = GameUI(WINDOW_SIZE, num_players)
-        
+
         # Game state
         self.game_should_reset = False
         self.game_should_close = False
         self.post_explosion_winner = None
         self.game_started = False  # Track if any player has made a move
         self.players_who_played = set()  # Track which players have made moves
-        
-        self.debug_log("Game initialized", {
-            "num_players": num_players,
-            "debug_mode": debug,
-            "grid_size": GRID_SIZE
-        })
+
+        self.debug_log(
+            "Game initialized",
+            {
+                "num_players": num_players,
+                "debug_mode": debug,
+                "grid_size": GRID_SIZE,
+            },
+        )
 
     def setup_debug_logging(self) -> None:
         """Setup debug logging to file."""
         # Create logs directory if it doesn't exist
         if not os.path.exists("logs"):
             os.makedirs("logs")
-        
+
         # Create log file with timestamp
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         self.log_filename = f"logs/crx_game_{timestamp}.log"
-        
+
         # Write initial log header
-        with open(self.log_filename, 'w') as f:
+        with open(self.log_filename, "w") as f:
             f.write(f"CRx Game Debug Log - {datetime.datetime.now()}\n")
             f.write("=" * 50 + "\n\n")
-    
+
     def debug_log(self, message: str, data: dict = None) -> None:
         """Log debug message to file if debug mode is enabled."""
         if not self.debug:
             return
-        
+
         timestamp = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
         log_entry = f"[{timestamp}] {message}"
-        
+
         if data:
             log_entry += f" - Data: {data}"
-        
+
         log_entry += "\n"
-        
+
         # Write to file
         try:
-            with open(self.log_filename, 'a') as f:
+            with open(self.log_filename, "a") as f:
                 f.write(log_entry)
         except Exception as e:
             print(f"Debug logging error: {e}")
-    
+
     def log_game_state(self) -> None:
         """Log current game state."""
         if not self.debug:
             return
-        
+
         # Count orbs for each player
         player_orbs = {}
         for player in range(self.num_players):
@@ -131,16 +135,19 @@ class Game:
                     if cell.orbs and cell.owner == player:
                         count += len(cell.orbs)
             player_orbs[f"player_{player}"] = count
-        
-        self.debug_log("Game state", {
-            "current_player": self.current_player,
-            "move_count": self.move_count,
-            "players_who_played": list(self.players_who_played),
-            "game_started": self.game_started,
-            "is_animating": self.is_animating,
-            "processing_explosions": self.processing_explosions,
-            "orb_counts": player_orbs
-        })
+
+        self.debug_log(
+            "Game state",
+            {
+                "current_player": self.current_player,
+                "move_count": self.move_count,
+                "players_who_played": list(self.players_who_played),
+                "game_started": self.game_started,
+                "is_animating": self.is_animating,
+                "processing_explosions": self.processing_explosions,
+                "orb_counts": player_orbs,
+            },
+        )
 
     def handle_click(self, pos: tuple[int, int]) -> bool:
         """Handle a click event."""
@@ -152,45 +159,57 @@ class Game:
         grid_x = (pos[0] - self.grid_offset_x) // CELL_SIZE
         grid_y = (pos[1] - self.grid_offset_y) // CELL_SIZE
 
-        self.debug_log("Click detected", {
-            "screen_pos": pos,
-            "grid_pos": (grid_x, grid_y),
-            "current_player": self.current_player
-        })
+        self.debug_log(
+            "Click detected",
+            {
+                "screen_pos": pos,
+                "grid_pos": (grid_x, grid_y),
+                "current_player": self.current_player,
+            },
+        )
 
         if 0 <= grid_y < GRID_SIZE and 0 <= grid_x < GRID_SIZE:
             cell = self.grid[grid_y][grid_x]
-            
-            self.debug_log("Cell state before move", {
-                "position": (grid_y, grid_x),
-                "orb_count": len(cell.orbs),
-                "owner": cell.owner,
-                "critical_mass": cell.critical_mass
-            })
-            
+
+            self.debug_log(
+                "Cell state before move",
+                {
+                    "position": (grid_y, grid_x),
+                    "orb_count": len(cell.orbs),
+                    "owner": cell.owner,
+                    "critical_mass": cell.critical_mass,
+                },
+            )
+
             if not cell.orbs or cell.orbs[0] == self.current_player:
                 # Mark game as started when first move is made
                 if not self.game_started:
                     self.game_started = True
                     self.debug_log("Game started!")
-                
+
                 # Track that this player has played
                 self.players_who_played.add(self.current_player)
                 self.move_count += 1
-                
-                self.debug_log("Valid move", {
-                    "player": self.current_player,
-                    "move_number": self.move_count,
-                    "players_who_played": list(self.players_who_played)
-                })
-                
+
+                self.debug_log(
+                    "Valid move",
+                    {
+                        "player": self.current_player,
+                        "move_number": self.move_count,
+                        "players_who_played": list(self.players_who_played),
+                    },
+                )
+
                 # Add orb and handle explosion if needed
                 if cell.add_orb(self.current_player):
-                    self.debug_log("Explosion triggered", {
-                        "position": (grid_y, grid_x),
-                        "orb_count_after_add": len(cell.orbs),
-                        "critical_mass": cell.critical_mass
-                    })
+                    self.debug_log(
+                        "Explosion triggered",
+                        {
+                            "position": (grid_y, grid_x),
+                            "orb_count_after_add": len(cell.orbs),
+                            "critical_mass": cell.critical_mass,
+                        },
+                    )
                     self.start_explosion_chain(grid_y, grid_x)
                 else:
                     # Create or update atom animation for the cell
@@ -218,52 +237,67 @@ class Game:
                             cell_owner,
                             len(cell.orbs),
                         )
-                
+
                 # Only switch player if the move was valid
                 old_player = self.current_player
-                self.current_player = (self.current_player + 1) % self.num_players  # noqa: E501
-                
-                self.debug_log("Turn ended", {
-                    "previous_player": old_player,
-                    "new_current_player": self.current_player
-                })
-                
+                self.current_player = (
+                    self.current_player + 1
+                ) % self.num_players  # noqa: E501
+
+                self.debug_log(
+                    "Turn ended",
+                    {
+                        "previous_player": old_player,
+                        "new_current_player": self.current_player,
+                    },
+                )
+
                 # Log game state after move
                 self.log_game_state()
-                
+
                 return True
             else:
                 self.debug_log(
-                    "Invalid move - cell belongs to different player", {
+                    "Invalid move - cell belongs to different player",
+                    {
                         "cell_owner": cell.orbs[0] if cell.orbs else None,
-                        "current_player": self.current_player
-                    }
+                        "current_player": self.current_player,
+                    },
                 )
         else:
-            self.debug_log("Click outside grid", {
-                "grid_bounds": f"0-{GRID_SIZE-1}",
-                "attempted_pos": (grid_x, grid_y)
-            })
+            self.debug_log(
+                "Click outside grid",
+                {
+                    "grid_bounds": f"0-{GRID_SIZE-1}",
+                    "attempted_pos": (grid_x, grid_y),
+                },
+            )
         return False
 
     def start_explosion_chain(self, row: int, col: int) -> None:
         """Start a chain of explosions using a queue to prevent recursion."""
         self.processing_explosions = True
         self.explosion_queue = [(row, col)]
-        self.debug_log("Explosion chain started", {
-            "initial_position": (row, col),
-            "queue_size": len(self.explosion_queue)
-        })
+        self.debug_log(
+            "Explosion chain started",
+            {
+                "initial_position": (row, col),
+                "queue_size": len(self.explosion_queue),
+            },
+        )
         # Don't process all explosions at once - let update_explosions handle them  # noqa: E501
 
     def update_explosions(self) -> None:
         """Process one explosion per frame to prevent freezing."""
         if self.explosion_queue:
             current_row, current_col = self.explosion_queue.pop(0)
-            self.debug_log("Processing explosion", {
-                "position": (current_row, current_col),
-                "remaining_in_queue": len(self.explosion_queue)
-            })
+            self.debug_log(
+                "Processing explosion",
+                {
+                    "position": (current_row, current_col),
+                    "remaining_in_queue": len(self.explosion_queue),
+                },
+            )
             self.handle_single_explosion(current_row, current_col)
         elif self.processing_explosions:
             # Queue is empty, stop processing explosions
@@ -279,14 +313,17 @@ class Game:
             # Store the exploding player before clearing the cell
             exploding_player = cell.owner
             adjacent_cells = cell.explode()
-            
-            self.debug_log("Cell exploded", {
-                "position": (row, col),
-                "exploding_player": exploding_player,
-                "orb_count_before": len(cell.orbs),
-                "critical_mass": cell.critical_mass,
-                "adjacent_cells": adjacent_cells
-            })
+
+            self.debug_log(
+                "Cell exploded",
+                {
+                    "position": (row, col),
+                    "exploding_player": exploding_player,
+                    "orb_count_before": len(cell.orbs),
+                    "critical_mass": cell.critical_mass,
+                    "adjacent_cells": adjacent_cells,
+                },
+            )
 
             # Remove atom animation for exploded cell
             if (row, col) in self.atom_animations:
@@ -301,10 +338,10 @@ class Game:
             for new_row, new_col in adjacent_cells:
                 if 0 <= new_row < GRID_SIZE and 0 <= new_col < GRID_SIZE:
                     target_cell = self.grid[new_row][new_col]
-                    
+
                     old_orb_count = len(target_cell.orbs)
                     old_owner = target_cell.owner
-                    
+
                     self.animations.append(
                         OrbAnimation(
                             (col, row),
@@ -313,17 +350,20 @@ class Game:
                         )
                     )
                     target_cell.add_orb(exploding_player)
-                    
-                    self.debug_log("Orb transferred", {
-                        "from": (row, col),
-                        "to": (new_row, new_col),
-                        "player": exploding_player,
-                        "target_orbs_before": old_orb_count,
-                        "target_orbs_after": len(target_cell.orbs),
-                        "target_owner_before": old_owner,
-                        "target_owner_after": target_cell.owner
-                    })
-                    
+
+                    self.debug_log(
+                        "Orb transferred",
+                        {
+                            "from": (row, col),
+                            "to": (new_row, new_col),
+                            "player": exploding_player,
+                            "target_orbs_before": old_orb_count,
+                            "target_orbs_after": len(target_cell.orbs),
+                            "target_owner_before": old_owner,
+                            "target_owner_after": target_cell.owner,
+                        },
+                    )
+
                     # Create or update atom animation for the new cell
                     # Use the target cell's actual owner
                     cell_owner = target_cell.owner
@@ -347,11 +387,14 @@ class Game:
                     if len(target_cell.orbs) >= target_cell.critical_mass:
                         if (new_row, new_col) not in self.explosion_queue:
                             self.explosion_queue.append((new_row, new_col))
-                            self.debug_log("Chain explosion queued", {
-                                "position": (new_row, new_col),
-                                "orb_count": len(target_cell.orbs),
-                                "critical_mass": target_cell.critical_mass
-                            })
+                            self.debug_log(
+                                "Chain explosion queued",
+                                {
+                                    "position": (new_row, new_col),
+                                    "orb_count": len(target_cell.orbs),
+                                    "critical_mass": target_cell.critical_mass,
+                                },
+                            )
 
     def check_win_condition(self) -> Optional[int]:
         """Check if any player has won or lost.
@@ -364,15 +407,18 @@ class Game:
         if not self.game_started:
             self.debug_log("Win condition check skipped - game not started")
             return None
-            
-        self.debug_log("Checking win condition", {
-            "players_who_played": list(self.players_who_played),
-            "num_players": self.num_players
-        })
-            
+
+        self.debug_log(
+            "Checking win condition",
+            {
+                "players_who_played": list(self.players_who_played),
+                "num_players": self.num_players,
+            },
+        )
+
         # Count how many players have orbs on the board
         players_with_orbs = set()
-        
+
         # Check which players have orbs
         for player in range(self.num_players):
             has_orbs = False
@@ -384,12 +430,15 @@ class Game:
                         break
                 if has_orbs:
                     break
-        
-        self.debug_log("Players with orbs", {
-            "players_with_orbs": list(players_with_orbs),
-            "count": len(players_with_orbs)
-        })
-        
+
+        self.debug_log(
+            "Players with orbs",
+            {
+                "players_with_orbs": list(players_with_orbs),
+                "count": len(players_with_orbs),
+            },
+        )
+
         # If only one player has orbs remaining, they win
         # But ONLY if ALL players have had at least one turn to play
         all_players_played = len(self.players_who_played) == self.num_players
@@ -397,16 +446,19 @@ class Game:
             # Make sure at least one move has been made by someone
             total_orbs = sum(
                 len(cell.orbs) for row in self.grid for cell in row
-            )
+            )  # noqa: E501
             if total_orbs > 0:
                 winner = list(players_with_orbs)[0]
-                self.debug_log("WIN BY ELIMINATION", {
-                    "winner": winner,
-                    "total_orbs": total_orbs,
-                    "all_players_played": all_players_played
-                })
+                self.debug_log(
+                    "WIN BY ELIMINATION",
+                    {
+                        "winner": winner,
+                        "total_orbs": total_orbs,
+                        "all_players_played": all_players_played,
+                    },
+                )
                 return winner
-        
+
         # Alternative win condition: player controls entire grid
         # This can happen even early in the game
         for player in range(self.num_players):
@@ -421,13 +473,16 @@ class Game:
                 has_orbs = any(cell.orbs for row in self.grid for cell in row)
                 all_played = len(self.players_who_played) == self.num_players
                 if has_orbs and all_played:
-                    self.debug_log("WIN BY DOMINATION", {
-                        "winner": player,
-                        "controlled_all_cells": True,
-                        "all_players_played": True
-                    })
+                    self.debug_log(
+                        "WIN BY DOMINATION",
+                        {
+                            "winner": player,
+                            "controlled_all_cells": True,
+                            "all_players_played": True,
+                        },
+                    )
                     return player
-        
+
         self.debug_log("No win condition met - game continues")
         return None
 
@@ -438,9 +493,10 @@ class Game:
         if result is not None:
             # Set a flag to indicate game should end with this winner
             self.post_explosion_winner = result
-            self.debug_log("Post-explosion winner detected", {
-                "winner": result
-            })
+            self.debug_log(
+                "Post-explosion winner detected",
+                {"winner": result},
+            )
 
     def update_animations(self, dt: float) -> None:
         """Update all active animations."""
@@ -521,19 +577,19 @@ class Game:
         # Draw atom animations
         for animation in self.atom_animations.values():
             animation.draw(self.screen)
-        
+
         # Draw responsive UI
         self.ui.draw(self.screen, self.current_player)
-    
+
     def reset_game(self) -> None:
         """Reset the game to initial state."""
         self.debug_log("Game reset initiated")
-        
+
         self.current_player = 0
         self.move_count = 0
         self.grid = [
-            [Cell(row, col) for col in range(GRID_SIZE)] 
-            for row in range(GRID_SIZE)
+            [Cell(row, col) for col in range(GRID_SIZE)]
+            for row in range(GRID_SIZE)  # noqa: E501
         ]
         self.animations.clear()
         self.atom_animations.clear()
@@ -545,19 +601,22 @@ class Game:
         self.post_explosion_winner = None
         self.game_started = False
         self.players_who_played.clear()
-        
-        self.debug_log("Game reset completed", {
-            "grid_cleared": True,
-            "animations_cleared": True,
-            "game_state_reset": True
-        })
+
+        self.debug_log(
+            "Game reset completed",
+            {
+                "grid_cleared": True,
+                "animations_cleared": True,
+                "game_state_reset": True,
+            },
+        )
 
     def run(self) -> Optional[int]:
         """Run the main game loop."""
         self.debug_log("Starting main game loop")
         running = True
         winner = None
-        
+
         while running:
             current_time = pygame.time.get_ticks()
             dt = (current_time - self.last_time) / 1000.0  # Convert to seconds
@@ -571,11 +630,12 @@ class Game:
                     # Handle window resize
                     new_size = (max(event.w, 600), max(event.h, 600))
                     self.screen = pygame.display.set_mode(
-                        new_size, pygame.RESIZABLE
+                        new_size,
+                        pygame.RESIZABLE,
                     )
                     self.ui = GameUI(new_size, self.num_players)
                     self.debug_log("Window resized", {"new_size": new_size})
-                
+
                 # Handle UI events first
                 ui_action = self.ui.handle_event(event)
                 if ui_action == "reset":
@@ -591,7 +651,7 @@ class Game:
                     pos = event.pos
                     reset_clicked = self.ui.reset_button.rect.collidepoint(pos)
                     close_clicked = self.ui.close_button.rect.collidepoint(pos)
-                    
+
                     if not reset_clicked and not close_clicked:
                         self.handle_click(pygame.mouse.get_pos())
                         # Check win/lose condition after each move
@@ -603,15 +663,16 @@ class Game:
                     self.update_hover(pygame.mouse.get_pos())
 
             self.update_animations(dt)
-            
+
             # Check for post-explosion win condition
             if self.post_explosion_winner is not None:
-                self.debug_log("Post-explosion winner detected in main loop", {
-                    "winner": self.post_explosion_winner
-                })
+                self.debug_log(
+                    "Post-explosion winner detected in main loop",
+                    {"winner": self.post_explosion_winner},
+                )
                 winner = self.post_explosion_winner
                 running = False
-            
+
             self.draw_grid()
             pygame.display.flip()
             self.clock.tick(FPS)
@@ -623,6 +684,6 @@ class Game:
         elif self.game_should_close:
             self.debug_log("Game ending - close requested")
             return "close"
-        
+
         self.debug_log("Game ending - winner determined", {"winner": winner})
         return winner
