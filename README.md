@@ -2,6 +2,14 @@
 
 A Python implementation of the CRx game using Pygame. This is a strategy game where players take turns placing orbs on a grid, trying to eliminate their opponents' orbs.
 
+## Quick Preview
+<p align="center">
+  <img src="screenshots/game_interface.png" width="200" alt="Game Interface">
+  <img src="screenshots/gameplay.png" width="200" alt="Gameplay">
+  <img src="screenshots/game_over.png" width="200" alt="Game Over">
+  <img src="screenshots/menu.png" width="200" alt="Menu">
+</p>
+
 ## Game Features
 
 ### Core Gameplay
