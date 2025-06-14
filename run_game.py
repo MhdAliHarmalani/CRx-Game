@@ -20,31 +20,34 @@ def main():
             pygame.quit()
             sys.exit()
         
-        # Play the game
-        game = Game(num_players=num_players)
-        winner = game.run()
-        
-        # Show game over screen
-        game_over = GameOverScreen(winner, num_players)
-        choice = game_over.run()
-        
-        if choice == "quit":
-            pygame.quit()
-            sys.exit()
-        elif choice == "menu":
-            continue  # Go back to menu
-        elif choice == "play_again":
-            # Play again with same number of players
+        # Play the game with reset functionality
+        while True:
             game = Game(num_players=num_players)
-            winner = game.run()
+            result = game.run()
             
-            # Show game over again
-            game_over = GameOverScreen(winner, num_players)
-            choice = game_over.run()
-            
-            if choice == "quit":
+            if result == "close":
+                break  # Go back to main menu
+            elif result == "reset":
+                continue  # Reset and play again with same settings
+            elif result is None:
+                # Player quit during game
                 pygame.quit()
                 sys.exit()
+            else:
+                # Game ended with a winner
+                winner = result
+                
+                # Show game over screen
+                game_over = GameOverScreen(winner, num_players)
+                choice = game_over.run()
+                
+                if choice == "quit":
+                    pygame.quit()
+                    sys.exit()
+                elif choice == "menu":
+                    break  # Go back to menu
+                elif choice == "play_again":
+                    continue  # Play again with same settings
 
 
 if __name__ == "__main__":

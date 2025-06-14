@@ -17,9 +17,9 @@ from .constants import (
     FPS,
     GRID_LINE_COLOR,
     GRID_SIZE,
-    PLAYER_COLORS,
     WINDOW_SIZE,
 )
+from .ui_components import GameUI
 
 
 class Game:
@@ -36,7 +36,7 @@ class Game:
         self.grid = [
             [Cell(row, col) for col in range(GRID_SIZE)] for row in range(GRID_SIZE)  # noqa: E501
         ]
-        self.screen = pygame.display.set_mode(WINDOW_SIZE)
+        self.screen = pygame.display.set_mode(WINDOW_SIZE, pygame.RESIZABLE)
         pygame.display.set_caption("CRx Game")
         self.clock = pygame.time.Clock()
 
@@ -57,6 +57,11 @@ class Game:
         # UI elements
         self.font = pygame.font.Font(None, 36)
         self.hover_cell = None
+        self.ui = GameUI(WINDOW_SIZE, num_players)
+        
+        # Game state
+        self.game_should_reset = False
+        self.game_should_close = False
 
     def handle_click(self, pos: tuple[int, int]) -> bool:
         """Handle a click event."""
@@ -287,31 +292,23 @@ class Game:
         for animation in self.atom_animations.values():
             animation.draw(self.screen)
         
-        # Draw current player indicator
-        self.draw_ui()
+        # Draw responsive UI
+        self.ui.draw(self.screen, self.current_player)
     
-    def draw_ui(self) -> None:
-        """Draw UI elements like player indicator."""
-        # Current player indicator
-        player_text = f"Player {self.current_player + 1}'s Turn"
-        text_surface = self.font.render(player_text, True, (255, 255, 255))
-        
-        # Draw with player color background
-        text_rect = text_surface.get_rect()
-        padding = 10
-        bg_rect = pygame.Rect(
-            10, 10, 
-            text_rect.width + padding * 2, 
-            text_rect.height + padding * 2
-        )
-        
-        pygame.draw.rect(
-            self.screen, PLAYER_COLORS[self.current_player], bg_rect
-        )
-        pygame.draw.rect(self.screen, (255, 255, 255), bg_rect, 2)
-        
-        text_rect.center = bg_rect.center
-        self.screen.blit(text_surface, text_rect)
+    def reset_game(self) -> None:
+        """Reset the game to initial state."""
+        self.current_player = 0
+        self.grid = [
+            [Cell(row, col) for col in range(GRID_SIZE)] 
+            for row in range(GRID_SIZE)
+        ]
+        self.animations.clear()
+        self.atom_animations.clear()
+        self.explosion_queue.clear()
+        self.processing_explosions = False
+        self.is_animating = False
+        self.game_should_reset = False
+        self.game_should_close = False
 
     def run(self) -> Optional[int]:
         """Run the main game loop."""
@@ -326,13 +323,35 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     return None
+                elif event.type == pygame.VIDEORESIZE:
+                    # Handle window resize
+                    new_size = (max(event.w, 600), max(event.h, 600))
+                    self.screen = pygame.display.set_mode(
+                        new_size, pygame.RESIZABLE
+                    )
+                    self.ui = GameUI(new_size, self.num_players)
+                
+                # Handle UI events first
+                ui_action = self.ui.handle_event(event)
+                if ui_action == "reset":
+                    self.game_should_reset = True
+                    running = False
+                elif ui_action == "close":
+                    self.game_should_close = True
+                    running = False
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    self.handle_click(pygame.mouse.get_pos())
-                    # Check win/lose condition after each move
-                    result = self.check_win_condition()
-                    if result is not None:
-                        winner = result
-                        running = False
+                    # Only handle game clicks if not clicking UI
+                    pos = event.pos
+                    reset_clicked = self.ui.reset_button.rect.collidepoint(pos)
+                    close_clicked = self.ui.close_button.rect.collidepoint(pos)
+                    
+                    if not reset_clicked and not close_clicked:
+                        self.handle_click(pygame.mouse.get_pos())
+                        # Check win/lose condition after each move
+                        result = self.check_win_condition()
+                        if result is not None:
+                            winner = result
+                            running = False
                 elif event.type == pygame.MOUSEMOTION:
                     self.update_hover(pygame.mouse.get_pos())
 
@@ -341,4 +360,9 @@ class Game:
             pygame.display.flip()
             self.clock.tick(FPS)
 
+        # Return appropriate result based on game state
+        if self.game_should_reset:
+            return "reset"
+        elif self.game_should_close:
+            return "close"
         return winner
