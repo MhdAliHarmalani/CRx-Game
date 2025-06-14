@@ -55,14 +55,9 @@ class GameOverScreen:
     
     def draw_winner_message(self) -> None:
         """Draw the winner message."""
-        if self.winner == -1:
-            title_text = "Game Over!"
-            subtitle_text = "Better luck next time!"
-            color = (255, 255, 255)
-        else:
-            title_text = f"Player {self.winner + 1} Wins!"
-            subtitle_text = "Congratulations!"
-            color = PLAYER_COLORS[self.winner]
+        title_text = f"Player {self.winner + 1} Wins!"
+        subtitle_text = "Congratulations!"
+        color = PLAYER_COLORS[self.winner]
         
         # Title
         title_surface = self.title_font.render(title_text, True, color)
