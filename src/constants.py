@@ -16,11 +16,15 @@ CELL_SIZE = WINDOW_SIZE[0] // GRID_SIZE
 PLAYER_COLORS = [
     (255, 0, 0),  # Red
     (0, 0, 255),  # Blue
+    (0, 255, 0),  # Green
+    (255, 255, 0),  # Yellow
 ]
 
 BACKGROUND_COLORS = [
     (255, 150, 150),  # More vibrant red
     (150, 150, 255),  # More vibrant blue
+    (150, 255, 150),  # More vibrant green
+    (255, 255, 150),  # More vibrant yellow
 ]
 
 GRID_LINE_COLOR = (100, 100, 100)

@@ -17,6 +17,7 @@ from .constants import (
     FPS,
     GRID_LINE_COLOR,
     GRID_SIZE,
+    PLAYER_COLORS,
     WINDOW_SIZE,
 )
 
@@ -285,10 +286,38 @@ class Game:
         # Draw atom animations
         for animation in self.atom_animations.values():
             animation.draw(self.screen)
+        
+        # Draw current player indicator
+        self.draw_ui()
+    
+    def draw_ui(self) -> None:
+        """Draw UI elements like player indicator."""
+        # Current player indicator
+        player_text = f"Player {self.current_player + 1}'s Turn"
+        text_surface = self.font.render(player_text, True, (255, 255, 255))
+        
+        # Draw with player color background
+        text_rect = text_surface.get_rect()
+        padding = 10
+        bg_rect = pygame.Rect(
+            10, 10, 
+            text_rect.width + padding * 2, 
+            text_rect.height + padding * 2
+        )
+        
+        pygame.draw.rect(
+            self.screen, PLAYER_COLORS[self.current_player], bg_rect
+        )
+        pygame.draw.rect(self.screen, (255, 255, 255), bg_rect, 2)
+        
+        text_rect.center = bg_rect.center
+        self.screen.blit(text_surface, text_rect)
 
-    def run(self) -> None:
+    def run(self) -> Optional[int]:
         """Run the main game loop."""
         running = True
+        winner = None
+        
         while running:
             current_time = pygame.time.get_ticks()
             dt = (current_time - self.last_time) / 1000.0  # Convert to seconds
@@ -296,16 +325,13 @@ class Game:
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    running = False
+                    return None
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     self.handle_click(pygame.mouse.get_pos())
                     # Check win/lose condition after each move
                     result = self.check_win_condition()
                     if result is not None:
-                        if result == -1:
-                            print("Game Over! A player has lost all orbs!")
-                        else:
-                            print(f"Player {result} wins!")
+                        winner = result
                         running = False
                 elif event.type == pygame.MOUSEMOTION:
                     self.update_hover(pygame.mouse.get_pos())
@@ -315,4 +341,4 @@ class Game:
             pygame.display.flip()
             self.clock.tick(FPS)
 
-        pygame.quit()
+        return winner
