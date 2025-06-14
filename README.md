@@ -96,6 +96,10 @@ A Python implementation of the CRx game using Pygame. This is a strategy game wh
    pip install -r requirements.txt
    ```
 
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 ## Running the Game
 
 1. Make sure your virtual environment is activated
