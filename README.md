@@ -187,3 +187,23 @@ For any questions, suggestions, or to discuss potential contributions, please co
 - Be thoughtful
 - Be collaborative
 - When disagreeing, try to understand why
+
+## Screenshots
+
+### Game Interface
+![Main Game Interface](screenshots/game_interface.png)
+*The main game interface showing the 8x8 grid, player turn indicator, and game controls*
+
+### Gameplay
+![Gameplay Example](screenshots/gameplay.png)
+*Example of gameplay with multiple players and chain reactions*
+
+### Game Over Screen
+![Game Over Screen](screenshots/game_over.png)
+*The game over screen showing the winner and available options*
+
+### Menu Screen
+![Menu Screen](screenshots/menu.png)
+*The main menu where players can start a new game*
+
+> Note: To add your own screenshots, place them in the `screenshots/` directory and update this section accordingly. Screenshots should be in PNG format and should showcase different aspects of the game.
